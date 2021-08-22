@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t paimen/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run paimen/react-test -f npm test -- --coverage
+
+after_success:
+  - docker build -t paimen/multi-client ./client
+  - docker build -t paimen/multi-nginx ./nginx
+  - docker build -t paimen/multi-server ./server
+  - docker build -t paimen/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push paimen/multi-client
+  - docker push paimen/multi-nginx
+  - docker push paimen/multi-server
+  - docker push paimen/multi-worker
